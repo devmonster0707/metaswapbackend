@@ -1,0 +1,2662 @@
+openapi: 3.0.0
+info:
+  title: "REST API"
+  version: "1.0.0"
+  description: "Example docs"
+servers:
+  - url: "https://metaswap.freeblock.site"
+  # - url: "http://localhost:3001"
+    description: "Dev server"
+
+components:
+  securitySchemes:
+    XAuthToken:
+      type: apiKey
+      in: header
+      name: X-Auth-Token
+      description: "Provide your X-Auth-Token for authorization"
+    AdminAuthToken:
+      type: apiKey
+      in: header
+      name: authorization
+      description: "Provide your authorization token for admin authrization"
+  schemas:
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateDocumentsDto:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+      required:
+        - title
+        - content
+    UpdateDocumentsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+      required:
+        - id
+        - title
+        - content
+    DeleteDocumentsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+      required:
+        - id
+    CreateFeeDto: 
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: [RECEIVE, SEND, EXCHANGE]
+        amount: {type: number}
+      required:
+        - type
+        - amount
+    Fee: 
+      type: object
+      properties: 
+        id: 
+          type: string
+        name: 
+          type: string
+        type: 
+          type: string 
+          enum: [RECEIVE, SEND, EXCHANGE]
+        amount: 
+          type: number
+        createdAt: 
+          type: string
+          format: date-time
+        updatedAt: 
+          type: string
+          format: date-time
+          
+security:
+  - XAuthToken: []
+  - AdminAuthToken: []
+
+paths:
+  /api/v1/account/admin/login:
+    post:
+      tags: 
+        - "Auth"
+      summary: "Admin Auth API"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "admin@email.com"
+                password:
+                  type: string
+                  example: "Admin#1552"
+      responses:
+        '200':
+          description: "Successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlzQWRtaW4iOnRydWUsImlhdCI6MTczMjg1ODY1MCwiZXhwIjoxNzMyODY1ODUwfQ.SWVXWs64j3aWiqEzGGcdjVaHp6OIe3FjEk6SGWd8Cb8"
+        '400':
+          description: "Wrong Password"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "Wrong password"
+                  message:
+                    type: string
+                    example: "Invalid credentials."
+        '401':
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "Unauthorized"
+                  message:
+                    type: string
+                    example: "The User is not exist."
+        '500':
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "API_ERROR"
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+
+  /api/v1/account/admin/register:
+    post:
+      tags: 
+        - "Auth"
+      summary: "Admin Auth API"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "admin@email.com"
+                password:
+                  type: string
+                  example: "Admin#1552"
+                firstName:
+                  type: string
+                  example: "Артем"
+                lastName:
+                  type: string
+                  example: "webdev"
+      responses:
+        '200':
+          description: "Successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "Admin created successfully"
+        '409':
+          description: "Conflict"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "DUPLICATE"
+                  message:
+                    type: string
+                    example: "User is conflicted."
+        '500':
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "API_ERROR"
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+  /api/v1/swaps:
+    post:
+      tags:
+        - "swaps"
+      summary: "Create swap"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceCurrency:
+                  type: string
+                  example: "ETH"
+                destinationCurrency:
+                  type: string
+                  example: "USDT"
+                amount:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: "Successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "Swap created successfully"
+        '400':
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "API_ERROR"
+                  message:
+                    type: string
+                    example: "Not enough funds for processing withdrawal by service fee."
+        '500':
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "API_ERROR"
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+  /api/v1/verification:
+    post:
+      tags:
+        - "KYC"
+      summary: KYC verification request
+      description: Submit a KYC verification request with required documents and user details.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - docId
+                - photoDoc
+                - photoUserWithDoc
+              properties:
+                firstName:
+                  type: string
+                  description: "User's first name"
+                lastName:
+                  type: string
+                  description: "User's last name"
+                docId:
+                  type: string
+                  description: "Document ID"
+                photoDoc:
+                  type: string
+                  format: binary
+                  description: "Photo of the document (e.g., ID, passport)"
+                photoUserWithDoc:
+                  type: string
+                  format: binary
+                  description: "Photo of the user holding the document"
+      responses:
+        '200':
+          description: Successful verification request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    example: 123
+                  firstName:
+                    type: string
+                    example: "John"
+                  lastName:
+                    type: string
+                    example: "Doe"
+                  docId:
+                    type: string
+                    example: "AB123456"
+                  status:
+                    type: string
+                    example: "pending"
+                  message:
+                    type: string
+                    example: "Verification request submitted successfully"
+        '400':
+          description: Bad Request - Invalid input or missing fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "photoDoc required"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+  /api/v1/getFormUrl:
+    post:
+      tags:
+        - "KYC"
+      summary: Get form URL
+      description: Endpoint to retrieve the URL for a form based on the form ID and applicant ID.
+      responses:
+        '200':
+          description: Successfully retrieved form URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  form_url:
+                    type: string
+                    example: "https://kyc-forms-new.amlbot.com/682c9f97155c704ee629b155bfe123070748"
+        '401':
+          description: Unauthorized - Invalid or missing credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: "unauthorized"
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+        '400':
+          description: Bad Request - Invalid form ID or applicant ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid form ID or applicant ID."
+        '500':
+          description: Internal Server Error - Failed to retrieve form URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An error occurred while retrieving the form URL."
+
+  /api/v1/autoconverts:
+    get:
+      tags:
+      - "autoconvert"
+      summary: AutoConvert Get request.
+      description: Get Autoconvert data.
+      responses:
+        '200':
+          description: Successful response with auto convert data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "3"
+                        currencyFrom:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "ETH"
+                            type:
+                              type: string
+                              example: "CRYPTO"
+                            cryptoCode:
+                              type: string
+                              example: "ETH"
+                            cryptoToken:
+                              type: string
+                              example: "ETH"
+                            cryptoChain:
+                              type: string
+                              example: "ETHEREUM"
+                            cryptoTokenName:
+                              type: string
+                              example: "ETH"
+                            cryptoChainName:
+                              type: string
+                              example: "Ethereum"
+                            decimals:
+                              type: integer
+                              example: 18
+                        currencyTo:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "USDT"
+                            type:
+                              type: string
+                              example: "CRYPTO"
+                            cryptoCode:
+                              type: string
+                              example: "USDT"
+                            cryptoToken:
+                              type: string
+                              example: "USDT"
+                            cryptoChain:
+                              type: string
+                              example: "ETHEREUM"
+                            cryptoTokenName:
+                              type: string
+                              example: "USDT"
+                            cryptoChainName:
+                              type: string
+                              example: "Ethereum"
+                            decimals:
+                              type: integer
+                              example: 6
+        '400':
+          description: Bad Request - User not found
+        '500':
+          description: Internal Server Error
+
+    post:
+      tags:
+      - "autoconvert"
+      summary: Create an auto convert
+      description: Creates a new auto convert with the given currency details.
+      requestBody:
+        description: Currency conversion details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currencyIdFrom:
+                  type: string
+                  example: "ETH"
+                currencyIdTo:
+                  type: string
+                  example: "USDT"
+      responses:
+        '201':
+          description: Successfully created auto convert.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "3"
+                  currencyFrom:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "ETH"
+                      type:
+                        type: string
+                        example: "CRYPTO"
+                      cryptoCode:
+                        type: string
+                        example: "ETH"
+                      cryptoToken:
+                        type: string
+                        example: "ETH"
+                      cryptoChain:
+                        type: string
+                        example: "ETHEREUM"
+                      cryptoTokenName:
+                        type: string
+                        example: "ETH"
+                      cryptoChainName:
+                        type: string
+                        example: "Ethereum"
+                      decimals:
+                        type: integer
+                        example: 18
+                  currencyTo:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "USDT"
+                      type:
+                        type: string
+                        example: "CRYPTO"
+                      cryptoCode:
+                        type: string
+                        example: "USDT"
+                      cryptoToken:
+                        type: string
+                        example: "USDT"
+                      cryptoChain:
+                        type: string
+                        example: "ETHEREUM"
+                      cryptoTokenName:
+                        type: string
+                        example: "USDT"
+                      cryptoChainName:
+                        type: string
+                        example: "Ethereum"
+                      decimals:
+                        type: integer
+                        example: 6
+
+        '400':
+          description: Unsupported currency error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "UNSUPPORTED_CURRENCY_ERR"
+                  message:
+                    type: string
+                    example: "unsupported currency"
+
+        '409':
+          description: Duplicate auto convert entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "DUPLICATE"
+                  message:
+                    type: string
+                    example: "The pair already exist."
+        
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+  /api/v1/account/get-alluser:
+    get:
+      tags: 
+      - Account(Admin & Super)
+      summary: Get all users
+      description: Retrieve all user information (Admin or Super permission required). Admin get all user info and Super get all user and admin info.
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        publicId:
+                          type: string
+                          example: "36"
+                        telegramUserId:
+                          type: string
+                          example: "13"
+                        telegramUsername:
+                          type: string
+                          nullable: true
+                          example: null
+                        telegramPhoto:
+                          type: string
+                          nullable: true
+                          example: null
+                        telegramPhotoMime:
+                          type: string
+                          nullable: true
+                          example: null
+                        firstName:
+                          type: string
+                          example: "robin"
+                        lastName:
+                          type: string
+                          nullable: true
+                          example: null
+                        language:
+                          type: string
+                          nullable: true
+                          example: null
+                        email:
+                          type: string
+                          nullable: true
+                          example: null
+                        priceCurrency:
+                          type: string
+                          nullable: true
+                          example: null
+                        totpSecret:
+                          type: string
+                          nullable: true
+                          example: null
+                        userRole:
+                          type: string
+                          example: "USER"
+                        userPermission:
+                          type: string
+                          example: "UNBLOCK"
+                        adminPermission:
+                          type: string
+                          example: "UNBLOCK"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2024-09-07T14:17:48.697Z"
+                        Asset:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        Transaction:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        internalTransferUserOutputs:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        internalTransferUserInputs:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        Autoconvert:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        verification:
+                          type: object
+                          nullable: true
+                          example: null
+                        verificationRequests:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        emailUpdateRequests:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        deposits:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        payouts:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        frozenAmounts:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        freezeTransactions:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        unfreezeTransactions:
+                          type: array
+                          items:
+                            type: object
+                          example: []
+                        Swaps:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              sourceCurrency:
+                                type: string
+                                example: "ETH"
+                              destinationCurrency:
+                                type: string
+                                example: "USDT"
+                              sourceAmount:
+                                type: number
+                                example: 1
+                              destinationAmount:
+                                type: number
+                                example: 2400
+                              userId:
+                                type: integer
+                                example: 1
+                              hashId:
+                                type: string
+                                example: "134545353"
+                              createdAt:
+                                type: string
+                                format: date-time
+                                example: "2024-09-07T05:21:53.279Z"
+                              state:
+                                type: string
+                                example: "IN_PROGRESS"
+                          example: []
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Admin permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/account/get-user:
+    get:
+      summary: Get user information
+      description: Retrieve user information by user ID (Admin permission required).
+      operationId: getUser
+      tags:
+        - Account(Admin)
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  publicId:
+                    type: string
+                    example: "36"
+                  telegramUserId:
+                    type: string
+                    example: "13"
+                  telegramUsername:
+                    type: string
+                    nullable: true
+                  telegramPhoto:
+                    type: string
+                    nullable: true
+                  telegramPhotoMime:
+                    type: string
+                    nullable: true
+                  firstName:
+                    type: string
+                    example: "robin"
+                  lastName:
+                    type: string
+                    nullable: true
+                  language:
+                    type: string
+                    nullable: true
+                  email:
+                    type: string
+                    nullable: true
+                  priceCurrency:
+                    type: string
+                    nullable: true
+                  totpSecret:
+                    type: string
+                    nullable: true
+                  userRole:
+                    type: string
+                    example: "USER"
+                  userPermission:
+                    type: string
+                    example: "UNBLOCK"
+                  adminPermission:
+                    type: string
+                    example: "UNBLOCK"
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: "2024-09-07T14:17:48.697Z"
+                  Asset:
+                    type: array
+                    items:
+                      type: object
+                  Transaction:
+                    type: array
+                    items:
+                      type: object
+                  internalTransferUserOutputs:
+                    type: array
+                    items:
+                      type: object
+                  internalTransferUserInputs:
+                    type: array
+                    items:
+                      type: object
+                  Autoconvert:
+                    type: array
+                    items:
+                      type: object
+                  verification:
+                    type: object
+                    nullable: true
+                  verificationRequests:
+                    type: array
+                    items:
+                      type: object
+                  emailUpdateRequests:
+                    type: array
+                    items:
+                      type: object
+                  deposits:
+                    type: array
+                    items:
+                      type: object
+                  payouts:
+                    type: array
+                    items:
+                      type: object
+                  frozenAmounts:
+                    type: array
+                    items:
+                      type: object
+                  freezeTransactions:
+                    type: array
+                    items:
+                      type: object
+                  unfreezeTransactions:
+                    type: array
+                    items:
+                      type: object
+                  Swaps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        sourceCurrency:
+                          type: string
+                          example: "ETH"
+                        destinationCurrency:
+                          type: string
+                          example: "USDT"
+                        sourceAmount:
+                          type: number
+                          format: float
+                          example: 1
+                        destinationAmount:
+                          type: number
+                          format: float
+                          example: 2400
+                        userId:
+                          type: integer
+                          example: 1
+                        hashId:
+                          type: string
+                          example: "134545353"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2024-09-07T05:21:53.279Z"
+                        state:
+                          type: string
+                          example: "IN_PROGRESS"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '404':
+          description: User not found
+        '500':
+          description: Internal Server Error
+
+  /api/v1/account/update-user-permission:
+    post:
+      summary: Update user permission
+      description: Update the permission status of a user (Admin permission required).
+      operationId: updateUserPermission
+      tags:
+        - Account(Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  example: 1
+                permission:
+                  type: string
+                  enum: ["BLOCK", "UNBLOCK"]
+                  example: "BLOCK"
+      responses:
+        '200':
+          description: User permission updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "user permission updated"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      publicId:
+                        type: string
+                        example: "36"
+                      telegramUserId:
+                        type: string
+                        example: "13"
+                      telegramUsername:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhoto:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhotoMime:
+                        type: string
+                        nullable: true
+                        example: null
+                      firstName:
+                        type: string
+                        example: "robin"
+                      lastName:
+                        type: string
+                        nullable: true
+                        example: null
+                      language:
+                        type: string
+                        nullable: true
+                        example: null
+                      email:
+                        type: string
+                        nullable: true
+                        example: null
+                      priceCurrency:
+                        type: string
+                        nullable: true
+                        example: null
+                      totpSecret:
+                        type: string
+                        nullable: true
+                        example: null
+                      userRole:
+                        type: string
+                        example: "USER"
+                      userPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "UNBLOCK"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-07T14:17:48.697Z"
+        '400':
+          description: Invalid request (e.g., missing required fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/account/update-admin-permission:
+    post:
+      summary: Update admin permission
+      description: Update the admin permission status of a user (Super permission required).
+      operationId: updateAdminPermission
+      tags:
+        - Account(Super)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  example: 1
+                permission:
+                  type: string
+                  enum: ["BLOCK", "UNBLOCK"]
+                  example: "BLOCK"
+      responses:
+        '200':
+          description: Admin permission updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "admin permission updated"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      publicId:
+                        type: string
+                        example: "36"
+                      telegramUserId:
+                        type: string
+                        example: "13"
+                      telegramUsername:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhoto:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhotoMime:
+                        type: string
+                        nullable: true
+                        example: null
+                      firstName:
+                        type: string
+                        example: "robin"
+                      lastName:
+                        type: string
+                        nullable: true
+                        example: null
+                      language:
+                        type: string
+                        nullable: true
+                        example: null
+                      email:
+                        type: string
+                        nullable: true
+                        example: null
+                      priceCurrency:
+                        type: string
+                        nullable: true
+                        example: null
+                      totpSecret:
+                        type: string
+                        nullable: true
+                        example: null
+                      userRole:
+                        type: string
+                        example: "ADMIN"
+                      userPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "UNBLOCK"
+                      adminPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "BLOCK"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-07T14:17:48.697Z"
+        '400':
+          description: Invalid request (e.g., missing required fields)
+        '401':
+          description: Unauthorized - Super permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/account/add-admin:
+    post:
+      summary: Add admin privileges to a user
+      description: Grant admin privileges to a user (Super permission required).
+      operationId: addAdmin
+      tags:
+        - Account(Super)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: admin@email.com
+                password:
+                  type: string
+                  example: Admin#1552
+                firstName:
+                  type: string
+                  example: Artem
+                lastName:
+                  type: string
+                  example: webdev
+      responses:
+        '200':
+          description: Successfully added admin privileges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "add admin success"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      publicId:
+                        type: string
+                        example: "36"
+                      telegramUserId:
+                        type: string
+                        example: "13"
+                      telegramUsername:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhoto:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhotoMime:
+                        type: string
+                        nullable: true
+                        example: null
+                      firstName:
+                        type: string
+                        example: "robin"
+                      lastName:
+                        type: string
+                        nullable: true
+                        example: null
+                      language:
+                        type: string
+                        nullable: true
+                        example: null
+                      email:
+                        type: string
+                        nullable: true
+                        example: null
+                      priceCurrency:
+                        type: string
+                        nullable: true
+                        example: null
+                      totpSecret:
+                        type: string
+                        nullable: true
+                        example: null
+                      userRole:
+                        type: string
+                        example: "ADMIN"
+                      userPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "UNBLOCK"
+                      adminPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "UNBLOCK"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-07T14:17:48.697Z"
+        '400':
+          description: Invalid request (e.g., missing required fields)
+        '401':
+          description: Unauthorized - Super permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/account/remove-admin:
+    post:
+      summary: Remove admin privileges from a user
+      description: Revoke admin privileges from a user (Super permission required).
+      operationId: removeAdmin
+      tags:
+        - Account(Super)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Successfully removed admin privileges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  message:
+                    type: string
+                    example: "remove admin success"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      publicId:
+                        type: string
+                        example: "36"
+                      telegramUserId:
+                        type: string
+                        example: "13"
+                      telegramUsername:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhoto:
+                        type: string
+                        nullable: true
+                        example: null
+                      telegramPhotoMime:
+                        type: string
+                        nullable: true
+                        example: null
+                      firstName:
+                        type: string
+                        example: "robin"
+                      lastName:
+                        type: string
+                        nullable: true
+                        example: null
+                      language:
+                        type: string
+                        nullable: true
+                        example: null
+                      email:
+                        type: string
+                        nullable: true
+                        example: null
+                      priceCurrency:
+                        type: string
+                        nullable: true
+                        example: null
+                      totpSecret:
+                        type: string
+                        nullable: true
+                        example: null
+                      userRole:
+                        type: string
+                        example: "USER"
+                      userPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "UNBLOCK"
+                      adminPermission:
+                        type: string
+                        enum: ["UNBLOCK", "BLOCK"]
+                        example: "BLOCK"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-07T14:17:48.697Z"
+        '400':
+          description: Invalid request (e.g., missing required fields)
+        '401':
+          description: Unauthorized - Super permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/fees:
+    get:
+      tags:
+        - "fees"
+      summary: "Get all fees"
+      responses:
+        '200':
+          description: "List of fees"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  fees:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Fee"
+        '400':
+          description: "Fees not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "FEES_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "fees not found"
+    post:
+      tags:
+        - "fees"
+      summary: "Create a new fee"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeeDto"
+      responses:
+        '200':
+          description: "Fee created successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  fee:
+                    $ref: "#/components/schemas/Fee"
+        '400':
+          description: "Fee already exists"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "FEE_ALREADY_EXISTS"
+                  message:
+                    type: string
+                    example: "fee already exists"
+    delete:
+      tags:
+        - "fees"
+      summary: "Delete a fee by type"
+      parameters:
+        - name: "type"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            enum:
+              - "TYPE1"
+              - "TYPE2"
+              - "TYPE3"
+          description: "The type of fee to delete"
+      responses:
+        '200':
+          description: "Fee deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  fee:
+                    $ref: "#/components/schemas/Fee"
+        '400':
+          description: "Fee not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "FEE_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "fee not found"
+  
+  /api/v1/fees/get-fee:
+    get:
+      tags:
+        - "fees"
+      summary: "Get a fee by type"
+      parameters:
+        - name: "type"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            enum:
+              - "TYPE1"
+              - "TYPE2"
+              - "TYPE3"
+          description: "The type of fee to retrieve"
+      responses:
+        '200':
+          description: "Fee details"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  fee:
+                    $ref: "#/components/schemas/Fee"
+        '400':
+          description: "Fee type not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "FEETYPE_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "correct feeType is required"
+
+  /api/v1/fees/update:
+    post:
+      tags:
+        - "fees"
+      summary: "Update a fee"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeeDto"
+      responses:
+        '200':
+          description: "Fee updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  fee:
+                    $ref: "#/components/schemas/Fee"
+        '400':
+          description: "Fee not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "FEE_NOT_FOUND"
+                  message:
+                    type: string
+                    example: "fee not found"
+
+  
+  /api/v1/news:
+    get: 
+      summary: All news.
+      description: Get All news.
+      tags:
+        - News
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  news:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "second title"
+                      content:
+                        type: string
+                        example: "second content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T06:47:49.061Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+    
+    post:
+      summary: Create news
+      description: Create a new news article.
+      tags:
+        - News
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+              required:
+                - title
+                - content
+      responses:
+        '200':
+          description: Created news successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  news:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "second title"
+                      content:
+                        type: string
+                        example: "second content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T06:47:49.061Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+    
+    delete:
+      summary: Delete a news item
+      description: Delete a news item by its ID (Admin permission required).
+      operationId: deleteNews
+      tags:
+        - News
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 3
+      responses:
+        '200':
+          description: News item deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  news:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "second title"
+                      content:
+                        type: string
+                        example: "second content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T06:47:49.061Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/news/get-news:
+    get:
+      summary: Get news by ID
+      description: Retrieve a specific news by its ID.
+      tags:
+        - News
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID of the document
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  news:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "second title"
+                      content:
+                        type: string
+                        example: "second content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T06:47:49.061Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+    
+
+  /api/v1/news/update:
+    post:
+      summary: Update a news item
+      description: Update a news item's title and content (Admin permission required).
+      operationId: updateNews
+      tags:
+        - News
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 2
+                title:
+                  type: string
+                  example: "ten title"
+                content:
+                  type: string
+                  example: "ten content"
+      responses:
+        '200':
+          description: News item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  news:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 2
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "ten title"
+                      content:
+                        type: string
+                        example: "ten content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T05:45:55.066Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '500':
+          description: Internal Server Error
+
+  # /api/v1/documents:
+  #   post:
+  #     summary: Create a document
+  #     description: Create a new document with a title and content (Admin permission required).
+  #     operationId: createDocument
+  #     tags:
+  #       - Documents
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               title:
+  #                 type: string
+  #                 example: "second title"
+  #               content:
+  #                 type: string
+  #                 example: "second content"
+  #     responses:
+  #       '200':
+  #         description: Document created successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 kind:
+  #                   type: string
+  #                   example: "OK"
+  #                 documents:
+  #                   type: object
+  #                   properties:
+  #                     id:
+  #                       type: integer
+  #                       example: 7
+  #                     userId:
+  #                       type: integer
+  #                       example: 1
+  #                     title:
+  #                       type: string
+  #                       example: "second title"
+  #                     content:
+  #                       type: string
+  #                       example: "second content"
+  #                     createdAt:
+  #                       type: string
+  #                       format: date-time
+  #                       example: "2024-09-09T10:04:22.718Z"
+  #       '400':
+  #         description: Invalid request (e.g., missing or invalid fields)
+  #       '401':
+  #         description: Unauthorized - Admin permission required
+  #       '500':
+  #         description: Internal Server Error
+
+  #   delete:
+  #     summary: Delete a document
+  #     description: Delete a document by its ID (Admin permission required).
+  #     operationId: deleteDocument
+  #     tags:
+  #       - Documents
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               id:
+  #                 type: integer
+  #                 example: 3
+  #     responses:
+  #       '200':
+  #         description: Document deleted successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 kind:
+  #                   type: string
+  #                   example: "OK"
+  #                 documents:
+  #                   type: object
+  #                   properties:
+  #                     id:
+  #                       type: integer
+  #                       example: 3
+  #                     userId:
+  #                       type: integer
+  #                       example: 1
+  #                     title:
+  #                       type: string
+  #                       example: "second title"
+  #                     content:
+  #                       type: string
+  #                       example: "second content"
+  #                     createdAt:
+  #                       type: string
+  #                       format: date-time
+  #                       example: "2024-09-09T06:47:49.061Z"
+  #       '400':
+  #         description: Invalid request (e.g., missing or invalid fields)
+  #       '401':
+  #         description: Unauthorized - Admin permission required
+  #       '500':
+  #         description: Internal Server Error
+
+  # /api/v1/documents/update:
+  #   post:
+  #     summary: Update a document
+  #     description: Update a document's title and content (Admin permission required).
+  #     operationId: updateDocument
+  #     tags:
+  #       - Documents
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               id:
+  #                 type: integer
+  #                 example: 2
+  #               title:
+  #                 type: string
+  #                 example: "ten title"
+  #               content:
+  #                 type: string
+  #                 example: "ten content"
+  #     responses:
+  #       '200':
+  #         description: Document updated successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 kind:
+  #                   type: string
+  #                   example: "OK"
+  #                 documents:
+  #                   type: object
+  #                   properties:
+  #                     id:
+  #                       type: integer
+  #                       example: 2
+  #                     userId:
+  #                       type: integer
+  #                       example: 1
+  #                     title:
+  #                       type: string
+  #                       example: "ten title"
+  #                     content:
+  #                       type: string
+  #                       example: "ten content"
+  #                     createdAt:
+  #                       type: string
+  #                       format: date-time
+  #                       example: "2024-09-09T05:45:55.066Z"
+  #       '400':
+  #         description: Invalid request (e.g., missing or invalid fields)
+  #       '401':
+  #         description: Unauthorized - Admin permission required
+  #       '500':
+  #         description: Internal Server Error
+  
+  /api/v1/documents:
+    get:
+      summary: Get all documents
+      description: Retrieve all documents.
+      tags:
+        - Documents
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['OK']
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+        '400':
+          description: No documents found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['DOCUMENTS_NOT_FOUND']
+                  message:
+                    type: string
+    post:
+      summary: Create a document
+      description: Create a new document.
+      tags:
+        - Documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentsDto'
+      responses:
+        '200':
+          description: Document created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['OK']
+                  documents:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Failed to create document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['DOCUMENTS_NOT_FOUND']
+                  message:
+                    type: string
+    delete:
+      summary: Delete a document
+      description: Delete an existing document.
+      tags:
+        - Documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDocumentsDto'
+      responses:
+        '200':
+          description: Document deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['OK']
+                  documents:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Failed to delete document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['DOCUMENTS_NOT_FOUND']
+                  message:
+                    type: string
+  
+  /api/v1/documents/get-documents:
+    get:
+      summary: Get a document by ID
+      description: Retrieve a document by its ID.
+      tags:
+        - Documents
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID of the document
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Document found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['OK']
+                  documents:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['DOCUMENTS_NOT_FOUND']
+                  message:
+                    type: string
+  /api/v1/documents/update:
+    post:
+      summary: Update a document
+      description: Update an existing document.
+      tags:
+        - Documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentsDto'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['OK']
+                  documents:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Failed to update document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum: ['DOCUMENTS_NOT_FOUND']
+                  message:
+                    type: string
+  
+  /api/v1/feedback:
+    post:
+      summary: Create feedback
+      description: Submit user feedback (Admin permission required).
+      operationId: createFeedback
+      tags:
+        - Feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "third title"
+                content:
+                  type: string
+                  example: "third content"
+      responses:
+        '200':
+          description: Feedback created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  feedback:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 6
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "third title"
+                      content:
+                        type: string
+                        example: "third content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T10:23:34.154Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '500':
+          description: Internal Server Error
+
+    get:
+      summary: Get feedback by user ID
+      description: Retrieve feedback submitted by a specific user (Admin permission required).
+      operationId: getFeedbackByUserId
+      tags:
+        - Feedback
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Feedback retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  feedbacks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        userId:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: "first news"
+                        content:
+                          type: string
+                          example: "first content"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2024-09-08T12:10:34.153Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '404':
+          description: No feedback found for the specified user ID
+        '500':
+          description: Internal Server Error
+
+    delete:
+      summary: Delete feedback
+      description: Delete feedback by its ID (Admin permission required).
+      operationId: deleteFeedback
+      tags:
+        - Feedback
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 5
+      responses:
+        '200':
+          description: Feedback deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  feedback:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                      userId:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "third news"
+                      content:
+                        type: string
+                        example: "third content"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-09-09T00:37:55.758Z"
+        '400':
+          description: Invalid request (e.g., missing or invalid fields)
+        '401':
+          description: Unauthorized - Admin permission required
+        '404':
+          description: Feedback not found
+        '500':
+          description: Internal Server Error
+
+  /api/v1/feedback/all:
+    get:
+      summary: Get all feedback
+      description: Retrieve all feedback submissions (Admin permission required).
+      operationId: getAllFeedback
+      tags:
+        - Feedback
+      responses:
+        '200':
+          description: Feedbacks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    example: "OK"
+                  feedbacks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        userId:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: "first news"
+                        content:
+                          type: string
+                          example: "first content"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2024-09-08T12:10:34.153Z"
+        '401':
+          description: Unauthorized - Admin permission required
+        '500':
+          description: Internal Server Error
+
+  /api/v1/assets:
+    get:
+      summary: Get user assets
+      description: Retrieve user balance amount.
+      operationId: getAssets     
+      tags:
+        - "Assets"
+      responses:
+        '200':
+          description: SUCCESS
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+  /api/v1/offchain/saveAddress:
+    post:
+      summary: save offchain address
+      description: save offchain address.
+      operationId: saveAddress     
+      tags:
+        - "OffChain"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: number
+                  example: 2
+                address:
+                  type: string
+                  example: "E7W3-77PT"
+      responses:
+        '200':
+          description: SUCCESS
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error       
+  /api/v1/offchain/send:
+    post:
+      summary: send money by offchain
+      description: send money by offchain.
+      operationId: sendCurrency     
+      tags:
+        - "OffChain"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                senderId:
+                  type: number
+                  example: 2
+                receiverAddress:
+                  type: string
+                  example: "E7W3-77PT"
+                currencyId:
+                  type: string
+                  example: 'BTC' 
+                amount:
+                  type: number
+                  example: 0.5
+      responses:
+        '200':
+          description: SUCCESS
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error       
+  
+  /api/v1/transactions:
+    get:
+      summary: Retrieve transactions
+      description: Fetch a list of transactions based on optional filters.
+      tags:
+        - Transactions
+      # parameters:
+      #   - name: type
+      #     in: query
+      #     description: Type of transaction (e.g., credit, debit)
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: crypto-token
+      #     in: query
+      #     description: Cryptocurrency token used in the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: crypto-chain
+      #     in: query
+      #     description: Blockchain used for the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: category
+      #     in: query
+      #     description: Category of the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      responses:
+        '200':
+          description: A list of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Unique identifier for the transaction
+                    type:
+                      type: string
+                      description: Type of transaction
+                    cryptoToken:
+                      type: string
+                      description: Cryptocurrency token
+                    cryptoChain:
+                      type: string
+                      description: Blockchain used
+                    category:
+                      type: string
+                      description: Transaction category
+                    amount:
+                      type: number
+                      description: Transaction amount
+                    date:
+                      type: string
+                      format: date-time
+                      description: Date of the transaction
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+
+  /api/v1/transactions/all:
+    get:
+      summary: Retrieve transactions(Admin permission is required)
+      description: Fetch a list of transactions based on optional filters.
+      tags:
+        - Transactions
+      # parameters:
+      #   - name: type
+      #     in: query
+      #     description: Type of transaction (e.g., credit, debit)
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: crypto-token
+      #     in: query
+      #     description: Cryptocurrency token used in the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: crypto-chain
+      #     in: query
+      #     description: Blockchain used for the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      #   - name: category
+      #     in: query
+      #     description: Category of the transaction
+      #     required: false
+      #     schema:
+      #       type: string
+      responses:
+        '200':
+          description: A list of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Unique identifier for the transaction
+                    type:
+                      type: string
+                      description: Type of transaction
+                    cryptoToken:
+                      type: string
+                      description: Cryptocurrency token
+                    cryptoChain:
+                      type: string
+                      description: Blockchain used
+                    category:
+                      type: string
+                      description: Transaction category
+                    amount:
+                      type: number
+                      description: Transaction amount
+                    date:
+                      type: string
+                      format: date-time
+                      description: Date of the transaction
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
